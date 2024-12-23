@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP/URL Reputation Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .panel h3 {
+            margin-top: 0;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IP/URL Reputation Checker</h1>
+        <form id="reputationForm">
+            <label for="inputValue">Enter IP or URL:</label>
+            <input type="text" id="inputValue" name="inputValue" required>
+            <button type="submit">Check Reputation</button>
+        </form>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Updated Regex to allow URLs with ports, paths, query parameters, etc.
+        const isURL = /^(https?:\/\/(?:[a-z0-9-]+\.)+[a-z0-9]{2,}(?::\d+)?(?:\/[^\s]*)?)$/i;
+
+        // Event listener for form submission
+        document.getElementById('reputationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputValue = document.getElementById('inputValue').value;
+
+            // Check if the input is an IP address or URL
+            const isIP = /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/.test(inputValue);
+            const isValidURL = isURL.test(inputValue); // Use the updated URL regex
+
+            // If it's not a valid IP or URL, show an error
+            if (!isIP && !isValidURL) {
+                document.getElementById('results').innerHTML = '<p class="error">Invalid input! Please enter a valid IP or URL.</p>';
+                return;
+            }
+
+            // Send request to the server to check reputation
+            const response = await fetch('/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inputValue })
+            });
+
+            const results = await response.json();
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = ''; // Clear previous results
+
+            if (results.error) {
+                resultsContainer.innerHTML = `<p class="error">${results.error}</p>`;
+                return;
+            }
+
+            // Display results based on whether it's an IP or URL
+            if (isIP && results.abuseIPDB) {
+                const abuseIPDBPanel = document.createElement('div');
+                abuseIPDBPanel.classList.add('panel');
+                abuseIPDBPanel.innerHTML = `
+                    <h3>AbuseIPDB Results</h3>
+                    <p><strong>IP Address:</strong> ${results.abuseIPDB.data.ipAddress}</p>
+                    <p><strong>Abuse Confidence Score:</strong> ${results.abuseIPDB.data.abuseConfidenceScore}</p>
+                    <p><strong>Country:</strong> ${results.abuseIPDB.data.countryCode}</p>
+                `;
+                resultsContainer.appendChild(abuseIPDBPanel);
+            }
+
+            // Handle VirusTotal results for both IP and URL
+            if (results.virusTotal) {
+                const virusTotalPanel = document.createElement('div');
+                virusTotalPanel.classList.add('panel');
+                virusTotalPanel.innerHTML = `
+                    <h3>VirusTotal Results</h3>
+                    ${isIP ? `
+                        <p><strong>IP Status:</strong> ${results.virusTotal.data.attributes.status}</p>
+                        <p><strong>Malicious Scans:</strong> ${results.virusTotal.data.attributes.last_analysis_stats.malicious} / ${results.virusTotal.data.attributes.last_analysis_stats.total}</p>
+                    ` : `
+                        <p><strong>URL Status:</strong> ${results.virusTotal.data.attributes.status}</p>
+                        <p><strong>Malicious Scans:</strong> ${results.virusTotal.data.attributes.last_analysis_stats.malicious} / ${results.virusTotal.data.attributes.last_analysis_stats.total}</p>
+                    `}
+                `;
+                resultsContainer.appendChild(virusTotalPanel);
+            }
+        });
+    </script>
+</body>
+</html>

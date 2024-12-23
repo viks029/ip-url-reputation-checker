@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP/URL Reputation Checker</title>
+</head>
+<body>
+    <h1>IP/URL Reputation Checker</h1>
+    <form id="reputationForm">
+        <label for="inputValue">Enter IP or URL:</label>
+        <input type="text" id="inputValue" name="inputValue" required>
+        <button type="submit">Check</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('reputationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputValue = document.getElementById('inputValue').value;
+
+            const response = await fetch('/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inputValue })
+            });
+            const results = await response.json();
+
+            document.getElementById('results').innerHTML = `
+                <h3>Results:</h3>
+                <pre>${JSON.stringify(results, null, 2)}</pre>
+            `;
+        });
+    </script>
+</body>
+</html>
