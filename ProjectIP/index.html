@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP/URL Reputation Checker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>IP/URL Reputation Checker</h1>
+    <form id="reputationForm">
+        <label for="inputValue">Enter IP or URL:</label>
+        <input type="text" id="inputValue" name="inputValue" required>
+        <button type="button" onclick="handleSubmit()">Check</button>
+    </form>
+
+    <div id="result"></div> <!-- IP Result Panel -->
+    <div id="url-result"></div> <!-- URL Result Panel -->
+
+    <script src="app.js"></script>
+</body>
+</html>
