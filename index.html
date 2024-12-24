@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reputation Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .results pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reputation Checker</h1>
+        <form id="checkForm">
+            <div class="form-group">
+                <label for="inputValue">Enter IP/URL:</label>
+                <input type="text" id="inputValue" name="inputValue" placeholder="Enter IP or URL" required>
+            </div>
+            <button type="submit">Check Reputation</button>
+        </form>
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('checkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputValue = document.getElementById('inputValue').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Checking...</p>';
+
+            try {
+                const response = await fetch('/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ inputValue }),
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch results.');
+
+                const data = await response.json();
+                let resultHtml = '<h2>Results:</h2>';
+                
+                // Dynamically display results with reputation score
+                Object.keys(data).forEach(key => {
+                    resultHtml += `
+                        <h3>${key}</h3>
+                        <pre>${JSON.stringify(data[key], null, 2)}</pre>
+                        <p><strong>Reputation Score:</strong> ${data[key].reputation_score}</p>
+                    `;
+                });
+
+                resultsDiv.innerHTML = resultHtml;
+            } catch (error) {
+                resultsDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
